@@ -1,0 +1,378 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<title>Genially Countdown Timer Generator</title>
+
+<style>
+
+body{
+font-family:Arial;
+background:#f4f4f4;
+padding:20px;
+}
+
+.container{
+display:flex;
+gap:30px;
+}
+
+.panel{
+background:white;
+padding:20px;
+border-radius:10px;
+width:360px;
+}
+
+.preview{
+background:transparent;
+padding:20px;
+}
+
+.timer-box{
+width:300px;
+height:150px;
+border-radius:10px;
+position:relative;
+overflow:hidden;
+}
+
+.fill{
+position:absolute;
+bottom:0;
+left:0;
+height:100%;
+width:100%;
+transform-origin:left;
+}
+
+.image{
+position:absolute;
+width:100%;
+height:100%;
+object-fit:cover;
+}
+
+.time{
+text-align:center;
+font-size:30px;
+margin-top:10px;
+}
+
+textarea{
+width:100%;
+height:170px;
+}
+
+button{
+margin-top:10px;
+padding:10px;
+cursor:pointer;
+}
+
+.feedback{
+display:none;
+text-align:center;
+margin-top:10px;
+}
+
+.feedback img{
+max-width:200px;
+}
+
+</style>
+</head>
+
+<body>
+
+<h2>Genially Timer Generator</h2>
+
+<div class="container">
+
+<div class="panel">
+
+<label>Минуты</label>
+<input id="minutes" type="number" value="1">
+
+<label>Секунды</label>
+<input id="seconds" type="number" value="0">
+
+<br><br>
+
+<label>Цвет шкалы</label>
+<input id="color" type="color" value="#00aaff">
+
+<br><br>
+
+<label>Цвет фона</label>
+<input id="bgcolor" type="color" value="#eeeeee">
+
+<br><br>
+
+<label>Картинка внутри таймера</label>
+<input id="image" type="file">
+
+<br><br>
+
+<label>Звук окончания</label>
+<input id="audioEnd" type="file">
+
+<br><br>
+
+<label>Feedback GIF / Image URL</label>
+<input id="feedbackImg" type="text" placeholder="https://...gif">
+
+<br><br>
+
+<label>Feedback Audio URL</label>
+<input id="feedbackAudio" type="text" placeholder="https://...mp3">
+
+<br>
+
+<button onclick="updatePreview()">Обновить предпросмотр</button>
+
+<button onclick="generateCode()">Получить код</button>
+
+<textarea id="code"></textarea>
+
+</div>
+
+<div class="preview">
+
+<div class="timer-box" id="box">
+<img id="img" class="image">
+<div id="fill" class="fill"></div>
+</div>
+
+<div id="time" class="time">01:00</div>
+
+<button onclick="stopTimer()">Stop</button>
+
+<div id="feedback" class="feedback">
+<img id="feedbackImage">
+</div>
+
+</div>
+
+</div>
+
+<script>
+
+let totalSeconds=60
+let remaining=60
+let timer=null
+
+function updatePreview(){
+
+let m=parseInt(minutes.value)||0
+let s=parseInt(seconds.value)||0
+
+totalSeconds=m*60+s
+remaining=totalSeconds
+
+time.innerText=format(remaining)
+
+box.style.background=bgcolor.value
+fill.style.background=color.value
+
+if(image.files[0]){
+img.src=URL.createObjectURL(image.files[0])
+}
+
+if(timer)clearInterval(timer)
+
+timer=setInterval(run,1000)
+
+}
+
+function run(){
+
+remaining--
+
+if(remaining<0){
+
+clearInterval(timer)
+
+if(audioEnd.files[0]){
+new Audio(URL.createObjectURL(audioEnd.files[0])).play()
+}
+
+return
+}
+
+time.innerText=format(remaining)
+
+let progress=remaining/totalSeconds
+fill.style.transform="scaleX("+progress+")"
+
+}
+
+function stopTimer(){
+
+clearInterval(timer)
+
+if(remaining>0){
+
+let img=document.getElementById("feedbackImage")
+let box=document.getElementById("feedback")
+
+if(feedbackImg.value){
+img.src=feedbackImg.value
+img.style.display="block"
+}
+
+if(feedbackAudio.value){
+new Audio(feedbackAudio.value).play()
+}
+
+box.style.display="block"
+
+}
+
+}
+
+function format(t){
+
+let m=Math.floor(t/60)
+let s=t%60
+
+return String(m).padStart(2,'0')+":"+String(s).padStart(2,'0')
+
+}
+
+function generateCode(){
+
+let code=`
+
+<div id="geniallyTimer">
+
+<style>
+
+#geniallyTimer{
+font-family:Arial;
+background:transparent;
+width:300px;
+}
+
+#gt-box{
+width:300px;
+height:150px;
+background:${bgcolor.value};
+position:relative;
+overflow:hidden;
+border-radius:10px;
+}
+
+#gt-fill{
+position:absolute;
+bottom:0;
+left:0;
+height:100%;
+width:100%;
+background:${color.value};
+transform-origin:left;
+}
+
+#gt-time{
+text-align:center;
+font-size:28px;
+margin-top:6px;
+}
+
+#gt-feedback{
+display:none;
+text-align:center;
+margin-top:10px;
+}
+
+#gt-feedback img{
+max-width:200px;
+}
+
+</style>
+
+<div id="gt-box">
+<div id="gt-fill"></div>
+</div>
+
+<div id="gt-time">${format(totalSeconds)}</div>
+
+<button onclick="gtStop()">Stop</button>
+
+<div id="gt-feedback">
+<img id="gt-feedback-img">
+</div>
+
+<script>
+
+let total=${totalSeconds}
+let remain=${totalSeconds}
+
+let fill=document.getElementById("gt-fill")
+let time=document.getElementById("gt-time")
+
+let feedbackImage="${feedbackImg.value}"
+let feedbackAudio="${feedbackAudio.value}"
+
+function format(t){
+let m=Math.floor(t/60)
+let s=t%60
+return String(m).padStart(2,'0')+":"+String(s).padStart(2,'0')
+}
+
+let timer=setInterval(()=>{
+
+remain--
+
+if(remain<0){
+clearInterval(timer)
+return
+}
+
+time.innerText=format(remain)
+
+let p=remain/total
+fill.style.transform="scaleX("+p+")"
+
+},1000)
+
+function gtStop(){
+
+clearInterval(timer)
+
+if(remain>0){
+
+let box=document.getElementById("gt-feedback")
+let img=document.getElementById("gt-feedback-img")
+
+if(feedbackImage){
+img.src=feedbackImage
+img.style.display="block"
+}
+
+if(feedbackAudio){
+new Audio(feedbackAudio).play()
+}
+
+box.style.display="block"
+
+}
+
+}
+
+<\/script>
+
+</div>
+
+`
+
+code.value=code
+
+}
+
+updatePreview()
+
+</script>
+
+</body>
+</html>
