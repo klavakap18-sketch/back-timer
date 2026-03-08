@@ -5,81 +5,68 @@
 <title>Genially Countdown Timer Generator</title>
 
 <style>
-
 body{
-font-family:Arial;
-background:#f4f4f4;
-padding:20px;
+    font-family:Arial;
+    background:#f4f4f4;
+    padding:20px;
 }
-
 .container{
-display:flex;
-gap:30px;
+    display:flex;
+    gap:30px;
 }
-
 .panel{
-background:white;
-padding:20px;
-border-radius:10px;
-width:360px;
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    width:360px;
 }
-
 .preview{
-background:transparent;
-padding:20px;
+    background:transparent;
+    padding:20px;
 }
-
 .timer-box{
-width:300px;
-height:150px;
-border-radius:10px;
-position:relative;
-overflow:hidden;
+    width:300px;
+    height:150px;
+    border-radius:10px;
+    position:relative;
+    overflow:hidden;
 }
-
 .fill{
-position:absolute;
-bottom:0;
-left:0;
-height:100%;
-width:100%;
-transform-origin:left;
+    position:absolute;
+    bottom:0;
+    left:0;
+    height:100%;
+    width:100%;
+    transform-origin:left;
 }
-
 .image{
-position:absolute;
-width:100%;
-height:100%;
-object-fit:cover;
+    position:absolute;
+    width:100%;
+    height:100%;
+    object-fit:cover;
 }
-
 .time{
-text-align:center;
-font-size:30px;
-margin-top:10px;
+    text-align:center;
+    font-size:30px;
+    margin-top:10px;
 }
-
 textarea{
-width:100%;
-height:170px;
+    width:100%;
+    height:170px;
 }
-
 button{
-margin-top:10px;
-padding:10px;
-cursor:pointer;
+    margin-top:10px;
+    padding:10px;
+    cursor:pointer;
 }
-
 .feedback{
-display:none;
-text-align:center;
-margin-top:10px;
+    display:none;
+    text-align:center;
+    margin-top:10px;
 }
-
 .feedback img{
-max-width:200px;
+    max-width:200px;
 }
-
 </style>
 </head>
 
@@ -119,20 +106,19 @@ max-width:200px;
 
 <br><br>
 
-<label>Feedback GIF / Image URL</label>
-<input id="feedbackImg" type="text" placeholder="https://...gif">
+<label>Feedback картинка</label>
+<input id="feedbackImg" type="file">
 
 <br><br>
 
-<label>Feedback Audio URL</label>
-<input id="feedbackAudio" type="text" placeholder="https://...mp3">
+<label>Feedback аудио</label>
+<input id="feedbackAudio" type="file">
 
 <br>
 
 <button onclick="updatePreview()">Обновить предпросмотр</button>
-
 <button onclick="generateCode()">Получить код</button>
-
+<button onclick="generateIframe()">Получить код iframe</button>
 <textarea id="code"></textarea>
 
 </div>
@@ -157,221 +143,125 @@ max-width:200px;
 </div>
 
 <script>
-
 let totalSeconds=60
 let remaining=60
 let timer=null
+let feedbackImageFile=null
+let feedbackAudioFile=null
 
 function updatePreview(){
+    let m=parseInt(minutes.value)||0
+    let s=parseInt(seconds.value)||0
 
-let m=parseInt(minutes.value)||0
-let s=parseInt(seconds.value)||0
+    totalSeconds=m*60+s
+    remaining=totalSeconds
 
-totalSeconds=m*60+s
-remaining=totalSeconds
+    time.innerText=format(remaining)
 
-time.innerText=format(remaining)
+    box.style.background=bgcolor.value
+    fill.style.background=color.value
 
-box.style.background=bgcolor.value
-fill.style.background=color.value
+    if(image.files[0]){
+        img.src=URL.createObjectURL(image.files[0])
+    }
 
-if(image.files[0]){
-img.src=URL.createObjectURL(image.files[0])
-}
+    // feedback файлы
+    feedbackImageFile = feedbackImg.files[0] || null
+    feedbackAudioFile = feedbackAudio.files[0] || null
 
-if(timer)clearInterval(timer)
-
-timer=setInterval(run,1000)
-
+    if(timer) clearInterval(timer)
+    timer=setInterval(run,1000)
 }
 
 function run(){
-
-remaining--
-
-if(remaining<0){
-
-clearInterval(timer)
-
-if(audioEnd.files[0]){
-new Audio(URL.createObjectURL(audioEnd.files[0])).play()
-}
-
-return
-}
-
-time.innerText=format(remaining)
-
-let progress=remaining/totalSeconds
-fill.style.transform="scaleX("+progress+")"
-
+    remaining--
+    if(remaining<0){
+        clearInterval(timer)
+        if(audioEnd.files[0]){
+            new Audio(URL.createObjectURL(audioEnd.files[0])).play()
+        }
+        return
+    }
+    time.innerText=format(remaining)
+    let progress=remaining/totalSeconds
+    fill.style.transform="scaleX("+progress+")"
 }
 
 function stopTimer(){
+    clearInterval(timer)
+    if(remaining>0){
+        let img=document.getElementById("feedbackImage")
+        let box=document.getElementById("feedback")
 
-clearInterval(timer)
-
-if(remaining>0){
-
-let img=document.getElementById("feedbackImage")
-let box=document.getElementById("feedback")
-
-if(feedbackImg.value){
-img.src=feedbackImg.value
-img.style.display="block"
-}
-
-if(feedbackAudio.value){
-new Audio(feedbackAudio.value).play()
-}
-
-box.style.display="block"
-
-}
-
+        if(feedbackImageFile){
+            img.src=URL.createObjectURL(feedbackImageFile)
+            img.style.display="block"
+        }
+        if(feedbackAudioFile){
+            new Audio(URL.createObjectURL(feedbackAudioFile)).play()
+        }
+        box.style.display="block"
+    }
 }
 
 function format(t){
-
-let m=Math.floor(t/60)
-let s=t%60
-
-return String(m).padStart(2,'0')+":"+String(s).padStart(2,'0')
-
+    let m=Math.floor(t/60)
+    let s=t%60
+    return String(m).padStart(2,'0')+":"+String(s).padStart(2,'0')
 }
 
 function generateCode(){
+    let feedbackImgURL = feedbackImageFile ? URL.createObjectURL(feedbackImageFile) : ""
+    let feedbackAudioURL = feedbackAudioFile ? URL.createObjectURL(feedbackAudioFile) : ""
 
-let code=`
-
+    let code=`
 <div id="geniallyTimer">
-
 <style>
-
-#geniallyTimer{
-font-family:Arial;
-background:transparent;
-width:300px;
-}
-
-#gt-box{
-width:300px;
-height:150px;
-background:${bgcolor.value};
-position:relative;
-overflow:hidden;
-border-radius:10px;
-}
-
-#gt-fill{
-position:absolute;
-bottom:0;
-left:0;
-height:100%;
-width:100%;
-background:${color.value};
-transform-origin:left;
-}
-
-#gt-time{
-text-align:center;
-font-size:28px;
-margin-top:6px;
-}
-
-#gt-feedback{
-display:none;
-text-align:center;
-margin-top:10px;
-}
-
-#gt-feedback img{
-max-width:200px;
-}
-
+#geniallyTimer{font-family:Arial;background:transparent;width:300px;}
+#gt-box{width:300px;height:150px;background:${bgcolor.value};position:relative;overflow:hidden;border-radius:10px;}
+#gt-fill{position:absolute;bottom:0;left:0;height:100%;width:100%;background:${color.value};transform-origin:left;}
+#gt-time{text-align:center;font-size:28px;margin-top:6px;}
+#gt-feedback{display:none;text-align:center;margin-top:10px;}
+#gt-feedback img{max-width:200px;}
 </style>
-
-<div id="gt-box">
-<div id="gt-fill"></div>
-</div>
-
+<div id="gt-box"><div id="gt-fill"></div></div>
 <div id="gt-time">${format(totalSeconds)}</div>
-
 <button onclick="gtStop()">Stop</button>
-
-<div id="gt-feedback">
-<img id="gt-feedback-img">
-</div>
-
+<div id="gt-feedback"><img id="gt-feedback-img"></div>
 <script>
-
-let total=${totalSeconds}
-let remain=${totalSeconds}
-
+let total=${totalSeconds}, remain=${totalSeconds};
 let fill=document.getElementById("gt-fill")
 let time=document.getElementById("gt-time")
-
-let feedbackImage="${feedbackImg.value}"
-let feedbackAudio="${feedbackAudio.value}"
-
-function format(t){
-let m=Math.floor(t/60)
-let s=t%60
-return String(m).padStart(2,'0')+":"+String(s).padStart(2,'0')
-}
-
+let feedbackImage="${feedbackImgURL}"
+let feedbackAudio="${feedbackAudioURL}"
 let timer=setInterval(()=>{
-
-remain--
-
-if(remain<0){
-clearInterval(timer)
-return
-}
-
-time.innerText=format(remain)
-
-let p=remain/total
-fill.style.transform="scaleX("+p+")"
-
+    remain--
+    if(remain<0){clearInterval(timer);return;}
+    time.innerText=(Math.floor(remain/60)).toString().padStart(2,'0')+":"+String(remain%60).padStart(2,'0')
+    fill.style.transform="scaleX("+(remain/total)+")"
 },1000)
-
 function gtStop(){
-
-clearInterval(timer)
-
-if(remain>0){
-
-let box=document.getElementById("gt-feedback")
-let img=document.getElementById("gt-feedback-img")
-
-if(feedbackImage){
-img.src=feedbackImage
-img.style.display="block"
+    clearInterval(timer)
+    if(remain>0){
+        let box=document.getElementById("gt-feedback")
+        let img=document.getElementById("gt-feedback-img")
+        if(feedbackImage){img.src=feedbackImage; img.style.display="block";}
+        if(feedbackAudio){new Audio(feedbackAudio).play();}
+        box.style.display="block"
+    }
 }
-
-if(feedbackAudio){
-new Audio(feedbackAudio).play()
-}
-
-box.style.display="block"
-
-}
-
-}
-
 <\/script>
-
 </div>
-
 `
+    code.value=code
+}
 
-code.value=code
-
+function generateIframe(){
+    let iframeCode = `<iframe srcdoc='${encodeURIComponent(code.value)}' width="320" height="250" frameborder="0" allowfullscreen></iframe>`
+    code.value=iframeCode
 }
 
 updatePreview()
-
 </script>
 
 </body>
